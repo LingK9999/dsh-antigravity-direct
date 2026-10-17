@@ -47,24 +47,40 @@
 
 ## 🚀 安装指引
 
-### 方式一：使用 DSH 插件命令安装（推荐）
+> ⚠️ **关于 DSH 桌面端安装的重要提示**：  
+> 在 DSH 官方桌面客户端（Electron 架构）中，`desktop` profile 受到官方内核独占保护，在终端中直接运行 `dsh plugin --profile desktop add ...` 会被内核闸门拦截并报错：  
+> `error: profile "desktop" is managed exclusively by the Electron application`  
+> 因此，请根据你的使用环境选择以下对应的安装方式：
 
-打开终端，执行以下命令从 GitHub 直接安装：
+### 方式一：DSH Desktop 桌面端一键安装（推荐）
+
+1. 克隆或下载本仓库代码到本地任意目录：
+   ```sh
+   git clone https://github.com/LingK9999/dsh-antigravity-direct.git
+   ```
+2. 进入目录，直接运行内置的一键安装脚本即可：
+   ```powershell
+   cd dsh-antigravity-direct
+   powershell -ExecutionPolicy Bypass -File .\install.ps1
+   ```
+   *脚本会自动完成插件目录部署、依赖同步与 profile bundles 注册，完成后重启 DSH Desktop 即可生效。*
+
+### 方式二：DSH 客户端「插件市场 / 设置页」安装
+
+若你的客户端安装了 `dshmarket`（插件市场）或支持在图形界面安装插件：
+1. 打开 DSH 界面中的 **「设置」→「插件」**（或 **DSH 插件市场**）。
+2. 在搜索或安装框中填入本仓库名：
+   ```text
+   github:LingK9999/dsh-antigravity-direct
+   ```
+3. 点击安装并重启 DSH。
+
+### 方式三：命令行 Web Profile 安装（适用于 `dsh web` 纯网页端用户）
+
+如果你使用的是在终端通过 `dsh web` 启动的非桌面端环境：
 
 ```sh
-dsh plugin --profile desktop add github:LingK9999/dsh-antigravity-direct
-```
-
-> 若使用 Web Profile，将 `--profile desktop` 替换为 `--profile web` 即可。
-
-### 方式二：本地克隆源码安装
-
-```sh
-# 1. 克隆仓库到本地
-git clone https://github.com/LingK9999/dsh-antigravity-direct.git
-
-# 2. 安装为 DSH 插件
-dsh plugin --profile desktop add ./dsh-antigravity-direct
+dsh plugin --profile web add github:LingK9999/dsh-antigravity-direct
 ```
 
 ---
@@ -153,6 +169,7 @@ dsh-antigravity-direct/
 ├── client.js                  # 浏览器端 UI 面板（双模型池额度仪表盘、网络代理配置、账号管理）
 ├── cordis.patch.yml           # Cordis 服务注入清单
 ├── index.js                   # 插件入口（生命周期管理、本地 RPC 通道挂载）
+├── install.ps1                # 桌面端一键安装脚本（自动处理 Electron desktop profile 写入）
 ├── package.json               # 插件清单与元数据定义
 ├── provider-config-snippet.yml# Provider 快捷配置模板
 ├── sanitize-rules.json        # 政策审查防御与改写规则
