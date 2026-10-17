@@ -1,0 +1,54 @@
+{
+  "name": "dsh-antigravity-direct",
+  "version": "0.3.2",
+  "description": "DeepSeek Harness (DSH) 插件：Google Antigravity 直连代理与模型服务，支持 OpenAI 兼容协议转换、实时双模型池额度监控、热切换网络代理与长文本输出防御。",
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "lib",
+    "cordis.patch.yml",
+    "provider-config-snippet.yml",
+    "sanitize-rules.json",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LingK9999/dsh-antigravity-direct.git"
+  },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "antigravity",
+    "gemini",
+    "claude",
+    "proxy"
+  ],
+  "author": "LingK9999",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/LingK9999/dsh-antigravity-direct/issues"
+  },
+  "homepage": "https://github.com/LingK9999/dsh-antigravity-direct#readme",
+  "dsh": {
+    "id": "antigravity-direct",
+    "name": "Antigravity直连代理",
+    "version": "0.3.2",
+    "permissions": "本地回环代理(127.0.0.1:8790), 只读Antigravity凭据, 设置页额度展示",
+    "client": {
+      "platform": "web",
+      "immediately": true
+    },
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}
