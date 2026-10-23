@@ -11,7 +11,10 @@
 ---
 
 ## ✨ 核心特性
-
+- 🌈 **主要设计用于小说文章**：
+  - 支持在agent对话框、文档中正常读写任何文本文字而不会被异常原因截断、报错。
+  - 通过多层注入提示词，经测试正常文章撰写基本无文字限制。
+  - 不建议用于复杂代码工程，已确认某些工具指令调用会触发中断。
 - 🔄 **OpenAI 协议双向无缝转接**：
   - 标准 OpenAI `/v1/chat/completions`（流式/非流式）⇄ Google Antigravity `generateContent` / `streamGenerateContent`。
   - 完整适配流式思考过程（Reasoning/Thinking Stream）、多模态图文输入（Vision）与原生工具调用（Function Calling / Tools）。
