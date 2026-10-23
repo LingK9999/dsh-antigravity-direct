@@ -1,7 +1,7 @@
 {
   "name": "dsh-antigravity-direct",
-  "version": "0.3.2",
-  "description": "DeepSeek Harness (DSH) 插件：Google Antigravity 直连代理与模型服务，支持 OpenAI 兼容协议转换、实时双模型池额度监控、热切换网络代理与长文本输出防御。",
+  "version": "0.4.0",
+  "description": "DeepSeek Harness (DSH) 插件：Google Antigravity 直连代理与模型服务，支持 OpenAI 兼容协议转换、最新模型列表自动发现与一键同步、实时双模型池额度监控、热切换网络代理与长文本输出防御。",
   "type": "module",
   "main": "index.js",
   "exports": {

@@ -2,19 +2,29 @@
 
 [![DSH Plugin](https://img.shields.io/badge/DSH-Plugin-blue.svg)](https://github.com/deepseek-ai/deepseek-harness)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-0.3.2-green.svg)](package.json)
+[![Version](https://img.shields.io/badge/version-0.4.0-green.svg)](package.json)
 
 **dsh-antigravity-direct** 是专为 [DeepSeek Harness (DSH)](https://github.com/deepseek-ai/deepseek-harness) 打造的本地直连代理核心插件。
 
-它在本地启动高性能回环代理服务（默认 `127.0.0.1:8790`），将标准 OpenAI `/v1/chat/completions` 协议无缝转换为 Google Antigravity（Cloud Code PA）的 `v1internal` 协议，使 DSH 能够以原生级体验调用 **Gemini 3.8 / 3.1** 与 **Claude 4.6** 等高配云端模型。
+它在本地启动高性能回环代理服务（默认 `127.0.0.1:8790`），将标准 OpenAI `/v1/chat/completions` 与 `/v1/models` 协议无缝转换为 Google Antigravity（Cloud Code PA）的内部协议，使 DSH 能够以原生级体验调用 **Gemini 3.8 / 3.5 / 3.1**、**Claude 4.6 (Thinking)** 与 **GPT-OSS** 等最新高配云端模型。
 
 ---
 
 ## ✨ 核心特性
 
-- 🔄 **协议双向实时转接**：
-  - OpenAI `/v1/chat/completions`（流式/非流式）⇄ Google Antigravity `generateContent` / `streamGenerateContent`。
+- 🔄 **OpenAI 协议双向无缝转接**：
+  - 标准 OpenAI `/v1/chat/completions`（流式/非流式）⇄ Google Antigravity `generateContent` / `streamGenerateContent`。
   - 完整适配流式思考过程（Reasoning/Thinking Stream）、多模态图文输入（Vision）与原生工具调用（Function Calling / Tools）。
+- ⚡ **最新模型列表自动发现与一键同步 (v0.4.0 重磅)**：
+  - 本地代理开放 OpenAI 标准 `/v1/models` 端点，实时拉取 Google Antigravity 官方最新可用模型清单。
+  - 精确解析模型上下文字符窗口（最高 1,000,000 Token）、单次生成上限与思考预算参数。
+  - 在 DSH 设置面板提供 **「⚡ 一键同步至 DSH 选择器」**，智能将最新模型写入 Web 与 Desktop profile 配置，聊天界面即可直接下拉切换任意最新模型！
+- 🛡️ **长上下文、代码编写与复杂工具调用的高可用断联防御 (v0.4.0 优化)**：
+  - **工具语法白名单与严谨匹配**：基于当前会话实际声明的工具动态校验，彻底杜绝编写代码时将普通代码块（如 `package.json`、Markdown、Python 代码字典等）误判为工具调用导致的正文截断断联。
+  - **流式心跳注入保活**：上游长时间思考或网络间歇期，持续向下游客户端注入静默空增量（Empty Delta），防止客户端因读超时而意外断联。
+  - **历史工具超大写入参数自动瘦身**：检测到历史多轮对话中存在超大代码文件写入等巨型参数时自动瘦身截断，大幅降低请求体积，避免触发上游政策网关负载限制与 502 错误。
+  - **底层网络代理连接池强化**：HttpsProxyAgent 启用 `keepAlive: true`、长达 300 秒空闲保活与 64 并发连接复用，告别 TCP 死锁。
+  - **路径降级与政策误判防护**：自动净化 Tool Result 中的绝对路径，避免上游政策审查层误判为外部文件载入攻击。
 - 📊 **双模型池额度可视化仪表盘**：
   - 在 DSH 设置面板「Antigravity 直连」中提供原生 UI。
   - 独立监控 **GEMINI 模型池** 与 **CLAUDE / GPT 模型池**。
@@ -23,25 +33,26 @@
   - 面板内置「网络代理设置 (HTTP / HTTPS Proxy)」卡片。
   - 支持免重启动态保存与切换代理地址（默认 `http://127.0.0.1:7890`，留空即走直连）。
   - 内置即时端点连通性测试与延迟探测。
-- 🛡️ **长文本与工具调用多重防御**：
-  - **路径降级与防政策误判**：自动净化 Tool Result 中的绝对路径与包裹标签，避免上游政策层审查误触。
-  - **工具语法防截断与闭合保护**：超长上下文生成时，深度防御残缺工具语法泄露与 JSON 尾部碎屑。
-  - **长思考保活心跳**：内置 TCP Keep-Alive 与指数退避重试，杜绝深度思考下的 502 / Socket Hang Up。
 - 👥 **多账号管理与无缝切换**：
   - 支持多 Google 账号 OAuth 凭据轮换与状态持久化。
   - 支持在 Web 界面一键发起 OAuth 登录授权或移除失效账号。
 
 ---
 
-## 📦 支持的模型矩阵
+## 📦 支持的部分模型矩阵
+
+通过插件内置的模型发现机制，上游可用模型均可动态同步。常见模型如下：
 
 | 模型 ID | 展示名称 | 上下文窗口 | 最大输出 Token | 核心特性 |
 | :--- | :--- | :--- | :--- | :--- |
-| `gemini-3.8-flash` | Gemini 3.8 Flash | 300,000 | 128,000 | 极速响应、多模态、支持 Low/Medium/High 思考 |
-| `gemini-3.8-flash-high` | Gemini 3.8 Flash (High) | 300,000 | 128,000 | 强化深度推理、复杂长文本创作 |
-| `gemini-3.1-pro-high` | Gemini 3.1 Pro (Agent) | 300,000 | 128,000 | Agent 规划、高难度工具调用 |
-| `claude-sonnet-4-6` | Claude Sonnet 4.6 | 200,000 | 64,000 | 代码架构、复杂逻辑重构、稳定输出 |
-| `claude-opus-4-6-thinking` | Claude Opus 4.6 | 200,000 | 64,000 | 极致文学创作与长程严谨推理 |
+| `gemini-3.8-flash-high` | Gemini 3.8 Flash (High) | 1,048,576 | 65,536 | 极速响应、深度推理、100万超大上下文、多模态 |
+| `gemini-3.8-flash-medium` | Gemini 3.8 Flash (Medium) | 1,048,576 | 65,536 | 平衡推理速度与输出深度 |
+| `gemini-3.8-flash-low` | Gemini 3.8 Flash (Low) | 1,048,576 | 65,536 | 极速日常对话与代码生成 |
+| `claude-sonnet-4-6` | Claude Sonnet 4.6 (Thinking) | 250,000 | 64,000 | 顶级代码架构、复杂重构、自带思考过程 |
+| `claude-opus-4-6-thinking` | Claude Opus 4.6 (Thinking) | 250,000 | 64,000 | 极致长程逻辑、文学创作与深度思考 |
+| `gpt-oss-120b-medium` | GPT-OSS 120B (Medium) | 131,072 | 32,768 | 开源大模型标杆、通用问答与代码推理 |
+| `gemini-2.5-pro` | Gemini 2.5 Pro | 1,048,576 | 65,535 | 经典高精度专业模型、多模态解析 |
+| `gemini-3-flash-agent` | Gemini 3.5 Flash (High) | 1,048,576 | 65,536 | Agent 工具链编排专用模型 |
 
 ---
 
@@ -85,13 +96,18 @@ dsh plugin --profile web add github:LingK9999/dsh-antigravity-direct
 
 ---
 
-## ⚙️ 配置与使用
+## ⚙️ 模型配置与自动同步
 
-### 1. 注册 Provider 配置
+### 方式一：面板一键同步（最简推荐）
 
-插件随 DSH 启动时会在本地启动端口 `8790` 的回环服务。你需要将 Antigravity 模型注册进 DSH 配置文件：
+插件启动后，进入 DSH 左侧 **「设置」→「Antigravity 直连」**：
+1. 查看当前检测到的上游可用模型列表。
+2. 点击 **「⚡ 一键同步至 DSH 选择器」** 按钮。
+3. 插件会自动更新你的配置文件（支持 Desktop 与 Web Profile），无需手动编辑 YAML，聊天窗口即刻可直接切换使用！
 
-在 `~/.dsh/profiles/desktop/cordis.patch.yml`（或对应 profile 的配置文件）中，找到 `llm-pi-ai` 插件的 `config.providers` 节点，添加以下内容：
+### 方式二：手动配置 Provider
+
+若需要手动定义模型或定制化参数，可以在 `~/.dsh/profiles/<profile>/cordis.patch.yml` 中找到 `llm-pi-ai` 插件的 `config.providers` 节点，添加以下配置：
 
 ```yaml
       antigravity:
@@ -100,54 +116,47 @@ dsh plugin --profile web add github:LingK9999/dsh-antigravity-direct
         api: openai-completions
         baseURL: http://127.0.0.1:8790/v1
         models:
-          - id: gemini-3.8-flash
-            name: gemini-3.8-flash
-            contextWindow: 300000
-            maxTokens: 128000
-            reasoningEfforts:
-              low: low
-              medium: medium
-              high: high
-            input: [text, image]
           - id: gemini-3.8-flash-high
-            name: gemini-3.8-flash-high
-            contextWindow: 300000
-            maxTokens: 128000
+            name: Gemini 3.8 Flash (High)
+            contextWindow: 1048576
+            maxTokens: 65536
+            input: [text, image]
             reasoningEfforts:
               low: low
               medium: medium
               high: high
-            input: [text, image]
-          - id: gemini-3.1-pro-high
-            name: gemini-3.1-pro (agent)
-            contextWindow: 300000
-            maxTokens: 128000
-            reasoningEfforts:
-              low: low
-              medium: medium
-              high: high
-            input: [text, image]
+            compat:
+              supportsDeveloperRole: false
+              supportsReasoningEffort: true
+              thinkingFormat: openai
+              thinkingTokenBudgetField: thinking_token_budget
           - id: claude-sonnet-4-6
-            name: claude-sonnet-4-6
-            contextWindow: 200000
+            name: Claude Sonnet 4.6 (Thinking)
+            contextWindow: 250000
             maxTokens: 64000
             input: [text, image]
-          - id: claude-opus-4-6-thinking
-            name: claude-opus-4-6
-            contextWindow: 200000
-            maxTokens: 64000
-            input: [text, image]
+            reasoningEfforts:
+              low: low
+              medium: medium
+              high: high
+            compat:
+              supportsDeveloperRole: false
+              supportsReasoningEffort: true
+              thinkingFormat: openai
+              thinkingTokenBudgetField: thinking_token_budget
 ```
 
 *(详见仓库内的 [`provider-config-snippet.yml`](provider-config-snippet.yml) 完整范例)*
 
-### 2. 账号凭据导入与登录
+---
+
+## 🔑 账号凭据导入与登录
 
 插件默认自动扫描以下目录下的 OAuth 凭据文件（含有 `refresh_token` 的 JSON）：
 - 默认目录：`~/.dsh/credentials/antigravity/*.json`
 - 自定义环境变量：可通过 `AG_CREDS_DIR` 指定凭据文件夹，或通过 `AG_CREDS` 指定单凭据文件。
 
-同时，你也能够在 DSH 设置页内点击 **「登录新账号」**，通过浏览器 OAuth 流程直接完成凭据绑定。
+同时，你也能够在 DSH 设置页内点击 **「添加账号（Google 登录）」**，通过浏览器 OAuth 流程直接完成凭据绑定。
 
 ---
 
@@ -166,17 +175,17 @@ dsh plugin --profile web add github:LingK9999/dsh-antigravity-direct
 
 ```text
 dsh-antigravity-direct/
-├── client.js                  # 浏览器端 UI 面板（双模型池额度仪表盘、网络代理配置、账号管理）
+├── client.js                  # 浏览器端 UI 面板（模型列表与一键同步、双模型池额度仪表盘、网络代理配置、账号管理）
 ├── cordis.patch.yml           # Cordis 服务注入清单
 ├── index.js                   # 插件入口（生命周期管理、本地 RPC 通道挂载）
 ├── install.ps1                # 桌面端一键安装脚本（自动处理 Electron desktop profile 写入）
-├── package.json               # 插件清单与元数据定义
-├── provider-config-snippet.yml# Provider 快捷配置模板
+├── package.json               # 插件清单与元数据定义 (v0.4.0)
+├── provider-config-snippet.yml# Provider 快捷配置模板（含思考能力参数）
 ├── sanitize-rules.json        # 政策审查防御与改写规则
 ├── LICENSE                    # MIT 开源授权协议
 ├── README.md                  # 说明文档
 └── lib/
-    ├── proxy-core.js          # 直连代理核心（协议转接、长文本/工具流防御、Token 刷新）
+    ├── proxy-core.js          # 直连代理核心（协议转接、/v1/models 发现、长文本/工具流断联防御、Token 刷新）
     └── vendor/                # 纯净内置依赖包
 ```
 

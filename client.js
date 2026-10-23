@@ -57,6 +57,17 @@ window.__ModuleLoader__.load({
 .agq-input:focus { outline:none; border-color:var(--agq-accent,#3b82f6); }
 .agq-btnrow { display:flex; gap:8px; align-items:center; }
 .agq-btnrow .agq-refresh { align-self:auto; }
+.agq-model-card { border:1px solid var(--agq-border,#2a2a35); border-radius:8px; padding:10px 12px; }
+.agq-model-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+.agq-model-list { display:flex; flex-direction:column; gap:4px; max-height:280px; overflow-y:auto; padding-right:2px; }
+.agq-model-item { display:flex; justify-content:space-between; align-items:center; padding:6px 10px; border-radius:6px; background:var(--agq-input-bg,rgba(127,127,127,.06)); font-size:12px; }
+.agq-model-item:hover { background:var(--agq-hover,#23232d); }
+.agq-model-name { font-weight:600; display:flex; align-items:center; gap:6px; }
+.agq-tag { font-size:10px; padding:1px 5px; border-radius:4px; border:1px solid var(--agq-border,#2a2a35); opacity:.85; }
+.agq-tag.green { border-color:#22c55e; color:#22c55e; }
+.agq-tag.blue { border-color:#3b82f6; color:#3b82f6; }
+.agq-tag.purple { border-color:#a855f7; color:#a855f7; }
+.agq-model-meta { display:flex; align-items:center; gap:8px; font-size:11px; opacity:.75; }
     `;
 
     function pctColor(f) {
@@ -201,6 +212,69 @@ window.__ModuleLoader__.load({
           : null);
     }
 
+    /* 可用模型列表与同步卡片 */
+    function ModelsCard(props) {
+      var data = props.data;
+      var busy = props.busy;
+      var onRefresh = props.onRefresh;
+      var onSync = props.onSync;
+      var syncMsg = props.syncMsg;
+      var syncMsgOk = props.syncMsgOk;
+      var expanded = props.expanded;
+      var onToggleExpand = props.onToggleExpand;
+
+      var models = (data && data.models) || [];
+      var displayModels = expanded ? models : models.slice(0, 6);
+
+      return react.createElement("div", { className: "agq-model-card" },
+        react.createElement("div", { className: "agq-model-head" },
+          react.createElement("div", null,
+            react.createElement("span", { className: "agq-pool-name" }, "Antigravity 模型列表"),
+            react.createElement("span", { className: "agq-note", style: { marginLeft: "8px" } },
+              data ? "（共 " + (data.total || models.length) + " 个模型）" : "加载中…")),
+          react.createElement("div", { className: "agq-btnrow" },
+            react.createElement("button", {
+              className: "agq-refresh",
+              disabled: busy === "refresh-models",
+              onClick: onRefresh
+            }, busy === "refresh-models" ? "刷新中…" : "刷新列表"),
+            react.createElement("button", {
+              className: "agq-refresh",
+              style: { borderColor: "var(--agq-accent,#3b82f6)", color: "var(--agq-accent,#3b82f6)", fontWeight: "600" },
+              disabled: busy === "sync-models" || !models.length,
+              onClick: onSync
+            }, busy === "sync-models" ? "同步中…" : "⚡ 一键同步至 DSH 选择器"))),
+        syncMsg
+          ? react.createElement("div", { className: syncMsgOk ? "agq-note" : "agq-err", style: { marginBottom: "8px" } },
+              (syncMsgOk ? "✓ " : "✗ ") + syncMsg)
+          : null,
+        models.length
+          ? react.createElement("div", { className: "agq-model-list" },
+              displayModels.map(function (m) {
+                var isDefault = m.isDefault || m.id === "gemini-3.8-flash-high";
+                var ctxText = m.contextWindow >= 1000000 ? (m.contextWindow / 1000000).toFixed(0) + "M" : Math.round(m.contextWindow / 1000) + "k";
+                return react.createElement("div", { key: m.id, className: "agq-model-item" },
+                  react.createElement("div", { className: "agq-model-name" },
+                    react.createElement("span", null, m.displayName || m.id),
+                    isDefault ? react.createElement("span", { className: "agq-tag green" }, "默认推荐") : null,
+                    m.supportsThinking ? react.createElement("span", { className: "agq-tag blue" }, "思考") : null,
+                    m.supportsImages ? react.createElement("span", { className: "agq-tag purple" }, "视觉") : null),
+                  react.createElement("div", { className: "agq-model-meta" },
+                    react.createElement("span", { className: "agq-note" }, ctxText + " context"),
+                    react.createElement("span", { style: { fontFamily: "monospace", opacity: 0.8 } }, m.id)));
+              }))
+          : react.createElement("div", { className: "agq-note" }, "暂未获取到模型数据，请点击刷新列表"),
+        models.length > 6
+          ? react.createElement("div", { style: { marginTop: "6px", textAlign: "center" } },
+              react.createElement("button", {
+                className: "agq-refresh",
+                style: { width: "100%", textAlign: "center", border: "none", fontSize: "11px", opacity: 0.8 },
+                onClick: onToggleExpand
+              }, expanded ? "收起部分模型" : "展开显示全部 " + models.length + " 个模型 ▼"))
+          : null
+      );
+    }
+
     /* 旧版单窗口卡片（quotaSummary 缺失时的回退） */
     function LegacyPool(props) {
       var p = props.pool;
@@ -222,7 +296,8 @@ window.__ModuleLoader__.load({
     function AntigravityQuotaSettings(props) {
       var rpc = props && props.rpc;
       var st = react.useState({ loading: true, data: null, error: null, accounts: null, loginState: "idle", loginMsg: null, busy: null,
-        proxy: null, proxyDraft: "", proxyMsg: null, proxyMsgOk: true });
+        proxy: null, proxyDraft: "", proxyMsg: null, proxyMsgOk: true,
+        modelsData: null, modelsExpanded: false, syncMsg: null, syncMsgOk: true });
       var s = st[0];
       var setS = st[1];
 
@@ -244,6 +319,9 @@ window.__ModuleLoader__.load({
                   return Object.assign({}, prev, { proxy: info, proxyDraft: prev.proxyDraft || (info.proxyUrl || "") });
                 });
               })
+              .catch(function () {});
+            rpcCall(rpc, "models")
+              .then(function (mres) { setS(function (prev) { return Object.assign({}, prev, { modelsData: mres }); }); })
               .catch(function () {});
           })
           .catch(function (e) { setS(function (prev) { return Object.assign({}, prev, { loading: false, error: String(e.message || e) }); }); });
@@ -314,6 +392,34 @@ window.__ModuleLoader__.load({
           .catch(function (e) { setS(function (prev) { return Object.assign({}, prev, { busy: null, proxyMsgOk: false, proxyMsg: String(e.message || e) }); }); });
       }, [rpc, s.proxyDraft]);
 
+      var refreshModels = react.useCallback(function () {
+        setS(function (prev) { return Object.assign({}, prev, { busy: "refresh-models", syncMsg: null }); });
+        rpcCall(rpc, "models", { refresh: true })
+          .then(function (res) {
+            setS(function (prev) { return Object.assign({}, prev, { busy: null, modelsData: res }); });
+          })
+          .catch(function (e) {
+            setS(function (prev) { return Object.assign({}, prev, { busy: null, syncMsgOk: false, syncMsg: String(e.message || e) }); });
+          });
+      }, [rpc]);
+
+      var syncModels = react.useCallback(function () {
+        setS(function (prev) { return Object.assign({}, prev, { busy: "sync-models", syncMsg: null }); });
+        rpcCall(rpc, "sync-models-to-dsh", { refresh: false })
+          .then(function (res) {
+            setS(function (prev) {
+              return Object.assign({}, prev, {
+                busy: null,
+                syncMsgOk: true,
+                syncMsg: "已成功同步 " + res.modelCount + " 个最新模型到 DSH 配置，聊天窗口可直接选用！"
+              });
+            });
+          })
+          .catch(function (e) {
+            setS(function (prev) { return Object.assign({}, prev, { busy: null, syncMsgOk: false, syncMsg: "同步失败：" + String(e.message || e) }); });
+          });
+      }, [rpc]);
+
       react.useEffect(function () {
         var styleEl = document.getElementById("agq-css");
         if (!styleEl) {
@@ -360,6 +466,21 @@ window.__ModuleLoader__.load({
       if (d && d.errors && d.errors.length) {
         kids.push(react.createElement("div", { key: "uerr", className: "agq-err" }, d.errors.join("; ")));
       }
+
+      /* 模型列表与一键同步 */
+      kids.push(react.createElement(ModelsCard, {
+        key: "models",
+        data: s.modelsData,
+        busy: s.busy,
+        onRefresh: refreshModels,
+        onSync: syncModels,
+        syncMsg: s.syncMsg,
+        syncMsgOk: s.syncMsgOk,
+        expanded: s.modelsExpanded,
+        onToggleExpand: function () {
+          setS(function (prev) { return Object.assign({}, prev, { modelsExpanded: !prev.modelsExpanded }); });
+        }
+      }));
 
       /* 账号区 */
       kids.push(react.createElement("div", { key: "acct-sec", className: "agq-sec" }, "账号"));

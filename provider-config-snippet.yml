@@ -1,56 +1,90 @@
-# antigravity provider 块备份（2026-10-13 从昨天会话记录 line 1447 edit 原样恢复）
-# 位置：C:\Users\Lin\.dsh\profiles\desktop\cordis.patch.yml 的 llm-pi-ai → config → providers 下
-# 插入锚点：`      zai-coding-cn:` 之前
+# Antigravity Provider 配置代码片段
+# 位置：~/.dsh/profiles/<profile>/cordis.patch.yml 的 llm-pi-ai -> config -> providers 下
+# 说明：v0.4.0 起支持在 DSH 设置面板「Antigravity 直连」中点击「⚡ 一键同步至 DSH 选择器」自动写入最新全部模型；
+#      首次手动配置或自定义时，可直接参考或复制以下内容：
+
       antigravity:
         displayName: Antigravity直连
         apiKeyEnv: GEMINI_API_KEY
         api: openai-completions
         baseURL: http://127.0.0.1:8790/v1
         models:
-          - id: gemini-3.8-flash
-            name: gemini-3.8-flash
-            contextWindow: 300000
-            maxTokens: 128000
-            reasoningEfforts:
-              low: low
-              medium: medium
-              high: high
-            input:
-              - text
-              - image
           - id: gemini-3.8-flash-high
-            name: gemini-3.8-flash-high
-            contextWindow: 300000
-            maxTokens: 128000
+            name: Gemini 3.8 Flash (High)
+            contextWindow: 1048576
+            maxTokens: 65536
+            input:
+              - text
+              - image
             reasoningEfforts:
               low: low
               medium: medium
               high: high
+            compat:
+              supportsDeveloperRole: false
+              supportsReasoningEffort: true
+              thinkingFormat: openai
+              thinkingTokenBudgetField: thinking_token_budget
+          - id: gemini-3.8-flash-medium
+            name: Gemini 3.8 Flash (Medium)
+            contextWindow: 1048576
+            maxTokens: 65536
             input:
               - text
               - image
-          - id: gemini-3.1-pro-high
-            name: gemini-3.1-pro (agent)
-            contextWindow: 300000
-            maxTokens: 128000
             reasoningEfforts:
               low: low
               medium: medium
               high: high
-            input:
-              - text
-              - image
-          - id: claude-opus-4-6-thinking
-            name: claude-opus-4-6
-            contextWindow: 200000
-            maxTokens: 64000
-            input:
-              - text
-              - image
+            compat:
+              supportsDeveloperRole: false
+              supportsReasoningEffort: true
+              thinkingFormat: openai
+              thinkingTokenBudgetField: thinking_token_budget
           - id: claude-sonnet-4-6
-            name: claude-sonnet-4-6
-            contextWindow: 200000
+            name: Claude Sonnet 4.6 (Thinking)
+            contextWindow: 250000
             maxTokens: 64000
             input:
               - text
               - image
+            reasoningEfforts:
+              low: low
+              medium: medium
+              high: high
+            compat:
+              supportsDeveloperRole: false
+              supportsReasoningEffort: true
+              thinkingFormat: openai
+              thinkingTokenBudgetField: thinking_token_budget
+          - id: claude-opus-4-6-thinking
+            name: Claude Opus 4.6 (Thinking)
+            contextWindow: 250000
+            maxTokens: 64000
+            input:
+              - text
+              - image
+            reasoningEfforts:
+              low: low
+              medium: medium
+              high: high
+            compat:
+              supportsDeveloperRole: false
+              supportsReasoningEffort: true
+              thinkingFormat: openai
+              thinkingTokenBudgetField: thinking_token_budget
+          - id: gpt-oss-120b-medium
+            name: GPT-OSS 120B (Medium)
+            contextWindow: 131072
+            maxTokens: 32768
+            input:
+              - text
+            reasoningEfforts:
+              low: low
+              medium: medium
+              high: high
+            compat:
+              supportsDeveloperRole: false
+              supportsReasoningEffort: true
+              thinkingFormat: openai
+              thinkingTokenBudgetField: thinking_token_budget

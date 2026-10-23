@@ -46,6 +46,8 @@ export async function apply(ctx) {
 
             const endpoints = {
                 "quota": (p) => svc.quota(p),
+                "models": (p) => svc.models(p),
+                "sync-models-to-dsh": (p) => svc.syncModelsToDsh(p),
                 "accounts": () => svc.accounts(),
                 "select-account": (p) => svc.selectAccount(p),
                 "remove-account": (p) => svc.removeAccount(p),
